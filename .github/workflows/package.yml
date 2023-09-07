@@ -26,7 +26,7 @@ jobs:
       - name: Merge latest data-terrain-high
         run: |
           rsync -avhW --compress-level=0 --exclude='.git/' --progress ./data-terrain-high/ ./warzone2100/data/terrain_overrides/high/
-          mkdir -P "${GITHUB_WORKSPACE}/build"
+          mkdir -p "${GITHUB_WORKSPACE}/build"
 
       - name: Configure warzone2100 buildsystem
         working-directory: "${{ github.workspace }}/build"

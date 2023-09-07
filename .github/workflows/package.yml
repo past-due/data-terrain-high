@@ -1,0 +1,48 @@
+name: Package Terrain Assets
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # Basis-encode the terrain files as a terrain package (high.wz)
+  build-terrain-package:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout this repo
+      - uses: actions/checkout@v4
+        with:
+          path: data-terrain-high
+
+      # Checkout the main Warzone2100/warzone2100 repo, which contains all the CMake build scripts
+      - uses: actions/checkout@v4
+        with:
+          repository: Warzone2100/warzone2100
+          path: warzone2100
+          submodules: recursive
+
+      # Copy the latest data-terrain-high data over-top of the warzone2100/data/terrain_overrides/high folder
+      - name: Merge latest data-terrain-high
+        run: |
+          rsync -avhW --compress-level=0 --exclude='.git/' --progress ./data-terrain-high/ ./warzone2100/data/terrain_overrides/high/
+          mkdir -P "${GITHUB_WORKSPACE}/build"
+
+      - name: Configure warzone2100 buildsystem
+        working-directory: "${{ github.workspace }}/build"
+        run: |
+          "${GITHUB_WORKSPACE}/warzone2100/get-dependencies_linux.sh" ubuntu
+          cmake -DCMAKE_BUILD_TYPE=Release -DWZ_ENABLE_WARNINGS:BOOL=OFF -DENABLE_DOCS:BOOL=OFF -DWZ_ENABLE_BACKEND_VULKAN:BOOL=OFF -DWZ_ENABLE_BASIS_UNIVERSAL:BOOL=ON -G"Ninja" "${GITHUB_WORKSPACE}/warzone2100"
+
+      # Build *only* the data_terrain_overrides_high target
+      - name: Build data_terrain_overrides_high target
+        working-directory: "${{ github.workspace }}/build"
+        run: |
+          cmake --build . --target data_terrain_overrides_high
+
+      - name: Upload high textures pack artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: high_textures_pack
+          path: "${{ github.workspace }}/build/data/terrain_overrides/high.wz"
+          if-no-files-found: error

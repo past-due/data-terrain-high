@@ -8,6 +8,8 @@ on:
 jobs:
   # Basis-encode the terrain files as a terrain package (high.wz)
   build-terrain-package:
+    permissions:
+      contents: write  # needed to create release
     runs-on: ubuntu-latest
     steps:
       # Checkout this repo
@@ -46,3 +48,27 @@ jobs:
           name: high_textures_pack
           path: "${{ github.workspace }}/build/data/terrain_overrides/high.wz"
           if-no-files-found: error
+
+      - name: Upload to release
+        env:
+          BUILT_ASSETS_PATH: "${{ github.workspace }}/build/data/terrain_overrides"
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get current release tagName, extract version number
+          set +e
+          last_release_version=0
+          last_release_version="$(gh release --repo "${GITHUB_REPOSITORY}" view --json tagName | jq -r '.tagName' | grep -Po "[1-9][0-9]*$")"
+          # Increment tagName version
+          new_release_version=$((last_release_version + 1))
+          new_release_tagname="v${new_release_version}"
+          # Check the new version doesn't exist
+          gh release --repo "${GITHUB_REPOSITORY}" view "${new_release_tagname}"
+          RESULT=$?
+          if [ $RESULT -eq 0 ]; then
+            # Release already exists!
+            echo "::error ::Release ${new_release_tagname} already exists for repo"
+            exit 1
+          fi
+          set -e
+          # Upload to release
+          gh release --repo "${GITHUB_REPOSITORY}" create "${new_release_tagname}" "${BUILT_ASSETS_PATH}/high.wz#high.wz-standard"

@@ -31,7 +31,7 @@ jobs:
       - name: Configure warzone2100 buildsystem
         working-directory: "${{ github.workspace }}/build"
         run: |
-          "${GITHUB_WORKSPACE}/warzone2100/get-dependencies_linux.sh" ubuntu
+          sudo "${GITHUB_WORKSPACE}/warzone2100/get-dependencies_linux.sh" ubuntu
           cmake -DCMAKE_BUILD_TYPE=Release -DWZ_ENABLE_WARNINGS:BOOL=OFF -DENABLE_DOCS:BOOL=OFF -DWZ_ENABLE_BACKEND_VULKAN:BOOL=OFF -DWZ_ENABLE_BASIS_UNIVERSAL:BOOL=ON -G"Ninja" "${GITHUB_WORKSPACE}/warzone2100"
 
       # Build *only* the data_terrain_overrides_high target

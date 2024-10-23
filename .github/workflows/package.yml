@@ -42,7 +42,7 @@ jobs:
           cmake --build . --target data_terrain_overrides_high
 
       - name: Upload high textures pack artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: high_textures_pack
           path: "${{ github.workspace }}/build/data/terrain_overrides/high.wz"
